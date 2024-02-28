@@ -1,6 +1,8 @@
 '''
 Concrete MethodModule class for a specific learning MethodModule
 '''
+from graphviz import Digraph
+from torchviz import make_dot
 
 # Copyright (c) 2017-Current Jiawei Zhang <jiawei@ifmlab.org>
 # License: TBD
@@ -25,7 +27,7 @@ class Method_CNN_CIFAR(method, nn.Module):
         print("CUDA is not available. Using CPU.")
 
     # it defines the max rounds to train the model
-    max_epoch = 10
+    max_epoch = 50
     # it defines the learning rate for gradient descent based optimizer for model learning
     learning_rate = 1e-3
 
@@ -49,14 +51,13 @@ class Method_CNN_CIFAR(method, nn.Module):
 
     def forward(self, x):
         '''Forward propagation'''
-        # x = x.to(self.device)
+        x = x.to(self.device)
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = self.pool(F.relu(self.conv3(x)))
         x = x.view(-1, 128 * 4 * 4)
         x = F.relu(self.fc1(self.dropout(x)))
         x = self.fc2(x)
-
 
         return x
 
@@ -152,3 +153,16 @@ class Method_CNN_CIFAR(method, nn.Module):
         # return {'pred_y': pred_y, 'true_y': self.data['test']['y']}
         pred_y_tensor = torch.tensor(pred_y, device=self.device) if isinstance(pred_y, np.ndarray) else pred_y
         return {'pred_y': pred_y_tensor.cpu().numpy(), 'true_y': self.data['test']['y']}
+
+
+# model = Method_CNN_CIFAR("name", "description")
+#
+# # Create a random input tensor to visualize the model
+# x = torch.randn(1, 3, 32, 32)
+#
+# # Pass the input tensor through the model to generate a computational graph
+# y = model(x)
+#
+# # Visualize the computational graph using Graphviz
+# dot = make_dot(y, params=dict(model.named_parameters()))
+# dot.render("model_architecture", format="png")

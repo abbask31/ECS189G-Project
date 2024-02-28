@@ -1,6 +1,7 @@
 '''
 Concrete MethodModule class for a specific learning MethodModule
 '''
+from torchviz import make_dot
 
 # Copyright (c) 2017-Current Jiawei Zhang <jiawei@ifmlab.org>
 # License: TBD
@@ -25,7 +26,7 @@ class Method_CNN_ORL(method, nn.Module):
         print("CUDA is not available. Using CPU.")
 
     # it defines the max rounds to train the model
-    max_epoch = 10
+    max_epoch = 200
     # it defines the learning rate for gradient descent based optimizer for model learning
     learning_rate = 1e-4
 
@@ -194,3 +195,14 @@ class Method_CNN_ORL(method, nn.Module):
         pred_y_tensor = torch.tensor(pred_y, device=self.device) if isinstance(pred_y, np.ndarray) else pred_y
         return {'pred_y': pred_y_tensor.cpu().numpy(), 'true_y': self.data['test']['y']}
 
+# model = Method_CNN_ORL('orl','')
+#
+# # Create a random input tensor to visualize the model
+# x = torch.randn(1, 1, 112, 92, device=model.device)
+#
+# # Pass the input tensor through the model to generate a computational graph
+# y = model(x)
+#
+# # Visualize the computational graph using Graphviz
+# dot = make_dot(y, params=dict(model.named_parameters()))
+# dot.render("model_architecture", format="png")
