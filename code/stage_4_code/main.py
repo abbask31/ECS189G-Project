@@ -35,14 +35,14 @@ class RNNClassifier(nn.Module):
         return out
 
     def init_hidden(self, batch_size):
-        return torch.zeros(1, batch_size, self.hidden_size)
+        return torch.zeros(1, batch_size, self.hidden_size, device=device)
 
 class TextDataset(Dataset):
-    def __init__(self, data_dir, tokenizer, vocab):
+    def __init__(self, data_dir, tokenizer, vocab, embedding):
         self.data = []
         self.tokenizer = tokenizer
         self.vocab = vocab
-
+        self.embedding = embedding
         # Read data from neg and pos folders
         for label in ['neg', 'pos']:
             label_dir = os.path.join(data_dir, label)
@@ -51,47 +51,64 @@ class TextDataset(Dataset):
             for filename in os.listdir(label_dir):
                 with open(os.path.join(label_dir, filename), 'r', encoding='utf-8') as file:
                     text = file.read()
+                    # print(text)
                     tokens = tokenizer(text.lower())
-                    indexed_tokens = [self.vocab[token] if token in self.vocab else 0 for token in tokens]
+                    # print(tokens)
+                    # print(len(tokens))
+                    oov_value = torch.tensor([0] * self.embedding, dtype=torch.long)
+                    indexed_tokens = [self.vocab[token] if token in self.vocab else oov_value for token in tokens]
+                    # print(indexed_tokens)
                     self.data.append((indexed_tokens, label_id))
+
 
     def __len__(self):
         return len(self.data)
 
+    def pad_sequences(self, max_length):
+        for i, (embeddings, label) in enumerate(self.data):
+            pad_len = max_length - len(embeddings)
+            if pad_len > 0:
+                padded_tensors = [torch.tensor([0] * self.embedding, dtype=torch.long)] * pad_len
+                self.data[i] = (embeddings + padded_tensors, label)
+
     def __getitem__(self, index):
         tokens, label = self.data[index]
+        return torch.stack(tokens), label
 
-        max_length = max(len(tokens) for tokens, label in self.data)
 
-        # Step 2: Pad each sequence of indexed tokens to match the maximum length
-        padded_data = []
-        for tokens, label in self.data:
-            # Pad the tokens using torch.nn.utils.rnn.pad_sequence
-            padded_tokens = torch.tensor(tokens)  # Convert tokens to tensor
-            padded_tokens = pad_sequence([padded_tokens], batch_first=True, padding_value=0)  # Pad the tokens
-            padded_tokens = padded_tokens[0]  # Extract the padded tokens from the batch
-            padded_data.append((padded_tokens, label))
+def get_dataset(dataset_dir, embedding_len):
+    glove_file_path = r'data\stage_4_data\embedding'
 
-        return padded_data, torch.tensor(label)
+    # Load GloVe embeddings
+    glove = GloVe(name='6B', dim=100, cache=glove_file_path)
+
+    tokenizer = get_tokenizer('basic_english')
+
+    dataset = TextDataset(dataset_dir, tokenizer, glove, embedding_len)
+
+    # Compute maximum sequence length
+    max_length = max(len(tokens) for tokens, _ in dataset)
+
+    # Pad the sequences
+    dataset.pad_sequences(max_length)
+
+    return dataset
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
-# data_dir = r'data\stage_4_data'
-glove_file_path = r'data\stage_4_data\embedding'
-
-# Load GloVe embeddings
-glove = GloVe(name='6B', dim=100, cache=glove_file_path)
 
 
 train_dir = r'data\stage_4_data\text_classification\train'
 test_dir = r'data\stage_4_data\text_classification\test'
 
-tokenizer = get_tokenizer('basic_english')
 
 # Create datasets
-train_dataset = TextDataset(train_dir, tokenizer, glove)
-test_dataset = TextDataset(test_dir, tokenizer, glove)
+train_dataset = get_dataset(train_dir, 100)
+print("train loaded")
+test_dataset = get_dataset(test_dir, 100)
+print("test loaded")
 
 batch_size = 32
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -108,7 +125,8 @@ model = RNNClassifier(input_size, hidden_size, output_size).to(device)
 criterion = nn.NLLLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-num_epochs = 1
+num_epochs = 10
+
 # Training loop
 for epoch in range(num_epochs):
     model.train()
@@ -141,5 +159,11 @@ for epoch in range(num_epochs):
     epoch_loss = running_loss / len(train_loader)
     accuracy = 100 * correct / total
     print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {accuracy:.2f}%')
+
+model_save_path = r'result\stage_4_result\text_classification\model.pkl'
+
+# Save the model to a .pkl file
+torch.save(model.state_dict(), model_save_path)
+
 
 # print(vocab)
