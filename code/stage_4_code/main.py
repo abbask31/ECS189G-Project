@@ -6,10 +6,14 @@ from torch.utils.data import DataLoader, Dataset
 from torchtext.vocab import GloVe
 from torchtext.data.utils import get_tokenizer
 from torch.nn.utils.rnn import pad_sequence
+import nltk
+from nltk.corpus import stopwords
+import string
 
 from collections import Counter
 from torchtext.vocab import Vocab
-
+nltk.download('stopwords')
+nltk.download('punkt')
 
 class RNNClassifier(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -18,6 +22,7 @@ class RNNClassifier(nn.Module):
         self.rnn = nn.RNN(input_size, hidden_size, batch_first=True)
         self.fc = nn.Linear(hidden_size, output_size)
         self.softmax = nn.LogSoftmax(dim=1)
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def forward(self, x):
         # Initialize hidden state
@@ -35,7 +40,7 @@ class RNNClassifier(nn.Module):
         return out
 
     def init_hidden(self, batch_size):
-        return torch.zeros(1, batch_size, self.hidden_size, device=device)
+        return torch.zeros(1, batch_size, self.hidden_size, device=self.device)
 
 class TextDataset(Dataset):
     def __init__(self, data_dir, tokenizer, vocab, embedding):
@@ -43,6 +48,8 @@ class TextDataset(Dataset):
         self.tokenizer = tokenizer
         self.vocab = vocab
         self.embedding = embedding
+        self.stop_words = set(stopwords.words('english'))
+
         # Read data from neg and pos folders
         for label in ['neg', 'pos']:
             label_dir = os.path.join(data_dir, label)
@@ -53,11 +60,15 @@ class TextDataset(Dataset):
                     text = file.read()
                     # print(text)
                     tokens = tokenizer(text.lower())
+
+                    # Remove stopwords and punctuations, and normalize words
+                    filtered_tokens = [word for word in tokens if
+                                       word.isalpha() and word not in string.punctuation and word not in self.stop_words]
                     # print(tokens)
                     # print(len(tokens))
                     oov_value = torch.tensor([0] * self.embedding, dtype=torch.long)
-                    indexed_tokens = [self.vocab[token] if token in self.vocab else oov_value for token in tokens]
-                    # print(indexed_tokens)
+                    indexed_tokens = [self.vocab[token] if token in self.vocab else oov_value for token in
+                                      filtered_tokens]
                     self.data.append((indexed_tokens, label_id))
 
 
@@ -110,11 +121,11 @@ print("train loaded")
 test_dataset = get_dataset(test_dir, 100)
 print("test loaded")
 
-batch_size = 32
+batch_size = 250
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size)
 
-input_size = 100  # Size of GloVe embeddings (100 in your case)
+input_size = 100  # Size of GloVe embeddings (100)
 hidden_size = 128  # Size of hidden state in RNN
 output_size = 2  # Number of classes (neg and pos)
 
@@ -123,7 +134,7 @@ model = RNNClassifier(input_size, hidden_size, output_size).to(device)
 
 # Define loss function and optimizer
 criterion = nn.NLLLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
 
 num_epochs = 10
 
