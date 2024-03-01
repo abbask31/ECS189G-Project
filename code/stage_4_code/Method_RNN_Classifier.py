@@ -19,7 +19,7 @@ class Method_RNN_Classifier(nn.Module):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.embedding = nn.Embedding.from_pretrained(glove.vectors)
-        self.num_epochs = 10
+        self.num_epochs = 20
         self.lr = 0.001
 
         self.lstm = nn.LSTM(100, hidden_size, num_layers, batch_first=True, dropout=0.2, bidirectional=False)

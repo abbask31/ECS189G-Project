@@ -22,5 +22,5 @@ class Setting_RNN(setting):
 
         self.evaluate.data = learned_result
         self.evaluate_additional_metrics.data = learned_result
-        return self.evaluate.evaluate(learned_result['true_y'], learned_result['pred_y']), self.evaluate_additional_metrics.evaluate()
+        return self.evaluate.evaluate(), self.evaluate_additional_metrics.evaluate()
 
