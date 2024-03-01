@@ -2,12 +2,9 @@
 Concrete IO class for a specific dataset
 '''
 import os
-import re
 import string
 import torch
-import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader, TensorDataset
-from torchvision import transforms
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
@@ -111,11 +108,16 @@ class Dataset_Loader(dataset):
     test_classifier_path = None
     task = None
 
+
     def __init__(self, dName=None, dDescription=None):
         super().__init__(dName, dDescription)
 
     def load(self):
         print('loading dataset...')
+
+        train_loader = None
+        test_loader = None
+
 
         if self.task == 'classification':
             if os.path.exists(self.train_classifer_path) and os.path.exists(self.test_classifier_path):
@@ -137,12 +139,10 @@ class Dataset_Loader(dataset):
                     pickle.dump(train_loader, f)
                 with open(self.test_classifier_path, 'wb') as f:
                     pickle.dump(test_loader, f)
-        else:
-            ## add generator files here
-            pass
+        for batch_idx, (inputs, labels) in enumerate(test_loader):
+            print(f"Batch {batch_idx}: Inputs shape: {inputs.shape}, Labels shape: {labels.shape}")
 
-
-        data = {'train':train_loader, 'test':test_loader}
+        data = {'train': train_loader, 'test': test_loader}
 
         print('done loading')
 

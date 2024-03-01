@@ -24,5 +24,4 @@ class Evaluate_Model(evaluate):
         # Compute F1 score
         f1 = f1_score(self.data['true_y'], self.data['pred_y'], average='macro')
 
-
         return [precision, recall, f1]

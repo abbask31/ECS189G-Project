@@ -10,16 +10,16 @@ import matplotlib.pyplot as plt
 
 class Method_RNN_Classifier(nn.Module):
     data = None
-    def __init__(self, mName, hidden_size=512, num_layers=2, output_size=1):
+    def __init__(self, mName='Classifer RNN', hidden_size=512, num_layers=2, output_size=1):
         super(Method_RNN_Classifier, self).__init__()
-
+        self.method_name = mName
         glove = GloVe(name='6B', dim=100, cache=r'data\stage_4_data\embedding')
         self.glove = glove
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.embedding = nn.Embedding.from_pretrained(glove.vectors)
-        self.num_epochs =  20
+        self.num_epochs = 10
         self.lr = 0.001
 
         self.lstm = nn.LSTM(100, hidden_size, num_layers, batch_first=True, dropout=0.2, bidirectional=False)
@@ -87,15 +87,17 @@ class Method_RNN_Classifier(nn.Module):
 
                 total_loss += loss.item()
 
+
             print(f"correct: {total_correct} total sample: {total_samples}")
             epoch_loss = total_loss / len(train_loader)
             epoch_accuracy = total_correct / total_samples
 
             print(f'Epoch [{epoch + 1}/{self.num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_accuracy:.4f}')
 
+
     def test(self, test_loader):
-        test_acc = 0
-        test_loss = 0
+        ypred_list = []
+        ytrue_list = []
 
         with torch.no_grad():
             for feature, target in test_loader:
@@ -104,21 +106,16 @@ class Method_RNN_Classifier(nn.Module):
                 out = self(feature).squeeze(1)
 
                 predicted = torch.tensor([1 if i == True else 0 for i in out > 0.5], device=self.device)
-                equals = predicted == target
-                acc = torch.mean(equals.type(torch.FloatTensor))
-                test_acc += acc.item()
 
-                loss = self.criterion(out.squeeze(), target.float())
-                test_loss += loss.item()
+                # Append predicted and true labels to lists
+                ypred_list.extend(predicted.cpu().tolist())
+                ytrue_list.extend(target.cpu().tolist())
 
-                # all_target.extend(target.cpu().numpy())
-                # all_predicted.extend(predicted.cpu().numpy())
-
-            print(f'Accuracy: {test_acc / len(test_loader):.4f}, Loss: {test_loss / len(test_loader):.4f}')
+        return {'pred_y': ypred_list, 'true_y': ytrue_list}
 
     def run(self):
         print('method running...')
         print('--start training...')
         self.train(self.data['train'])
         print('--start testing...')
-        self.test(self.data['test'])
+        return self.test(self.data['test'])
