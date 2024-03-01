@@ -17,11 +17,11 @@ def init_model_objs(dataset_name):
     method_obj = None
 
     if dataset_name == 'MNIST':
-        method_obj = Method_CNN_MNIST('multi-layer perceptron', '')
+        method_obj = Method_CNN_MNIST('MNIST CNN', '')
     elif dataset_name == 'ORL':
-        method_obj = Method_CNN_ORL('multi-layer perceptron', '')
+        method_obj = Method_CNN_ORL('ORL CNN', '')
     elif dataset_name == 'CIFAR':
-        method_obj = Method_CNN_CIFAR('multi-layer perceptron', '')
+        method_obj = Method_CNN_CIFAR('CIFAR CNN', '')
 
 
     result_obj = Result_Saver(dataset_name + ' saver', '')
@@ -60,14 +60,14 @@ if 1:
 
     # ---- objection initialization setction ---------------
 
-    setting_mnist = init_model_objs('MNIST')
-    setting_orl = init_model_objs('ORL')
+    # setting_orl = init_model_objs('ORL')
+    # setting_mnist = init_model_objs('MNIST')
     setting_cifar = init_model_objs('CIFAR')
 
     # ------------------------------------------------------
 
     # ---- running section ---------------------------------
-    run_model(setting_mnist)
-    run_model(setting_orl)
+    # run_model(setting_orl)
+    # run_model(setting_mnist)
     run_model(setting_cifar)
     # ------------------------------------------------------

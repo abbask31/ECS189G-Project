@@ -124,10 +124,10 @@ class SentimentAnalysisRNN(nn.Module):
         self.num_layers = num_layers
         self.embedding = nn.Embedding.from_pretrained(embedding.vectors)
 
-        self.lstm = nn.LSTM(100, hidden_size, num_layers, batch_first=True, dropout=0.5, bidirectional=False)
+        self.lstm = nn.LSTM(100, hidden_size, num_layers, batch_first=True, dropout=0.2, bidirectional=False)
         self.rnn = nn.RNN(100, 1)
-        self.fc1 = nn.Linear(2*hidden_size, output_size)
-        self.dropout = nn.Dropout(p=0.5)
+        self.fc1 = nn.Linear(hidden_size, output_size)
+        self.dropout = nn.Dropout(p=0.3)
         self.sig = nn.Sigmoid()
 
     def forward(self, x):
@@ -150,21 +150,38 @@ class SentimentAnalysisRNN(nn.Module):
         # return out
 
         # Get the word embeddings of the batch
-        embedded = self.embedding(x)
-        # Propagate the input through LSTM layer/s
-        _, (hidden, _) = self.lstm(embedded)
+        # embedded = self.embedding(x)
+        # # Propagate the input through LSTM layer/s
+        # _, (hidden, _) = self.lstm(embedded)
+        #
+        # # Extract output of the last time step
+        # # Extract forward and backward hidden states of the
+        # # last time step
+        # out = hidden[-1, :, :]
+        #
+        # out = self.dropout(out)
+        # # out = self.fc1(out)
+        # out = self.sig(out)
 
-        # Extract output of the last time step
-        # Extract forward and backward hidden states of the
-        # last time step
-        out = torch.cat([hidden[-2, :, :], hidden[-1, :, :]], dim=1)
+        x = x.long()
+
+        x = self.embedding(x)
+
+        out, _ = self.lstm(x)
+
+        out = out[:, -1, :]
 
         out = self.dropout(out)
+
         out = self.fc1(out)
+
         out = self.sig(out)
 
         return out
 
+    # def init_hidden(self, batch_size):
+    #     h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
+    #     c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
 
 
 
@@ -185,7 +202,7 @@ else:
     test_data = IMDbDataset(test_dir, word_to_idx)
 
     train_loader = create_dataset(dataset=train_data, pad_value=0, shuffle=True)
-    test_loader = create_dataset(dataset=test_data, pad_value=0, shuffle=False)
+    test_loader = create_dataset(dataset=test_data, pad_value=0, shuffle=True)
 
     # Save the loaders
     with open(train_loader_path, 'wb') as f:
@@ -193,15 +210,24 @@ else:
     with open(test_loader_path, 'wb') as f:
         pickle.dump(test_loader, f)
 
+for input, label in train_loader:
+    x, y = input, label
+
+    print('Sample batch size: ', x.size())   # batch_size, seq_length
+    print('Sample batch input: \n', x)
+    print()
+    print('Sample label size: ', y.size())   # batch_size
+    print('Sample label input: \n', y)
+    break
 
 # Initialize model, loss, and optimizer
 embedding = glove
 
 # Define hyperparameters
 NUM_EPOCHS = 20
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 0.001
 
-model = SentimentAnalysisRNN(embedding, 256, 2, 1).to(device)
+model = SentimentAnalysisRNN(embedding, 512, 2, 1).to(device)
 criterion = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
@@ -222,6 +248,9 @@ for epoch in range(NUM_EPOCHS):
         # Compute loss
         optimizer.zero_grad()
         loss.backward()
+
+        nn.utils.clip_grad_norm_(model.parameters(), 5)
+
         optimizer.step()
 
         # Compute accuracy
@@ -240,21 +269,32 @@ for epoch in range(NUM_EPOCHS):
 
     print(f'Epoch [{epoch + 1}/{NUM_EPOCHS}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_accuracy:.4f}')
 
-# Evaluate the model
-model.eval()
-with torch.no_grad():
-    correct = 0
-    total = 0
-    for inputs, labels in test_loader:
-        inputs = inputs.to(device)
-        labels = labels.to(device)
-
-        outputs = model(inputs).squeeze(1)
-        predicted = torch.round(torch.sigmoid(outputs))
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-    print(f'Accuracy of the networks: {100 * correct / total}%')
-
 # Save the model
 torch.save(model.state_dict(), 'sentiment_analysis_rnn_model.pth')
+
+test_acc = 0
+test_loss = 0
+
+model.load_state_dict(torch.load('sentiment_analysis_rnn_model.pth'))
+
+model.eval()
+with torch.no_grad():
+    for feature, target in test_loader:
+        feature, target = feature.to(device), target.to(device)
+
+        out = model(feature).squeeze(1)
+
+        predicted = torch.tensor([1 if i == True else 0 for i in out > 0.5], device=device)
+        equals = predicted == target
+        acc = torch.mean(equals.type(torch.FloatTensor))
+        test_acc += acc.item()
+
+        loss = criterion(out.squeeze(), target.float())
+        test_loss += loss.item()
+
+        # all_target.extend(target.cpu().numpy())
+        # all_predicted.extend(predicted.cpu().numpy())
+
+    print(f'Accuracy: {test_acc / len(test_loader):.4f}, Loss: {test_loss / len(test_loader):.4f}')
+
+

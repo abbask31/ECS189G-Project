@@ -19,9 +19,6 @@ import pickle
 
 nltk.download('wordnet')
 
-# Define device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 # Define paths
 train_dir = r'data\stage_4_data\text_classification\train'
 test_dir = r'data\stage_4_data\text_classification\test'
@@ -61,6 +58,25 @@ def preprocess_text(text):
     text = lemmatize_text(text)  # Lemmatize words
     return text
 
+def create_dataset(dataset, pad_value, shuffle,  batch_size=128):
+
+    sequences = [sample[0] for sample in dataset]  # Extract sequences (X values)
+    labels = [sample[1] for sample in dataset]  # Extract labels
+
+    # Pad sequences
+    pad_len = 200
+    padded_sequences = pad_sequence([seq[:pad_len] for seq in sequences],
+                                    batch_first=True,
+                                    padding_value=pad_value)
+
+    # Convert labels to tensor
+    labels_tensor = torch.tensor(labels)
+
+    t_dataset = TensorDataset(padded_sequences, labels_tensor)
+
+    return DataLoader(t_dataset, batch_size=batch_size, shuffle=shuffle)
+
+
 class IMDbDataset(Dataset):
     def __init__(self, directory, word_to_idx):
         self.directory = directory
@@ -91,65 +107,43 @@ class Dataset_Loader(dataset):
     data = None
     dataset_source_folder_path = None
     dataset_source_file_name = None
+    train_classifer_path = None
+    test_classifier_path = None
+    task = None
 
     def __init__(self, dName=None, dDescription=None):
         super().__init__(dName, dDescription)
 
     def load(self):
         print('loading dataset...')
-        train_X = []
-        train_y = []
 
-        test_X = []
-        test_y = []
+        if self.task == 'classification':
+            if os.path.exists(self.train_classifer_path) and os.path.exists(self.test_classifier_path):
+                # Load loaders from the saved files
+                with open(self.train_classifer_path, 'rb') as f:
+                    train_loader = pickle.load(f)
+                with open(self.test_classifier_path, 'rb') as f:
+                    test_loader = pickle.load(f)
+            else:
+                # Create dataset and data loader
+                train_data = IMDbDataset(self.dataset_source_folder_path + r'\train', word_to_idx)
+                test_data = IMDbDataset(self.dataset_source_folder_path + r'\test', word_to_idx)
 
-        f = open(self.dataset_source_folder_path + self.dataset_source_file_name, 'rb')
-        data = pickle.load(f)
-        f.close()
+                train_loader = create_dataset(dataset=train_data, pad_value=0, shuffle=True)
+                test_loader = create_dataset(dataset=test_data, pad_value=0, shuffle=True)
 
-        mean = (0.5, )
-        std = (0.5, )
+                # Save the loaders
+                with open(self.train_classifer_path, 'wb') as f:
+                    pickle.dump(train_loader, f)
+                with open(self.test_classifier_path, 'wb') as f:
+                    pickle.dump(test_loader, f)
+        else:
+            ## add generator files here
+            pass
 
-        if self.dataset_source_file_name[1:] == 'CIFAR':
-            mean = (0.5, 0.5, 0.5)
-            std = (0.5, 0.5, 0.5)
 
-        data_transforms = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std)  # Normalize for a single grayscale channel
-        ])
-
-        train_data, test_data = data['train'], data['test']
-
-        train_dataset = CustomDataset(train_data, self.dataset_source_file_name[1:], transform=data_transforms)
-        test_dataset = CustomDataset(test_data, self.dataset_source_file_name[1:], transform=data_transforms)
-
-        train_loader = DataLoader(train_dataset, shuffle=True)
-        test_loader = DataLoader(test_dataset,  shuffle=False)
-
-        for train_batch in train_loader:
-            batch_X, batch_y = train_batch
-            train_X.append(batch_X)
-            train_y.append(batch_y)
-
-        # Convert the accumulated lists to tensors
-        train_X = torch.cat(train_X, dim=0)
-        train_y = torch.cat(train_y, dim=0)
-
-        for test_batch in test_loader:
-            batch_X, batch_y = test_batch
-            test_X.append(batch_X)
-            test_y.append(batch_y)
-
-        # Convert the accumulated lists to tensors
-        test_X = torch.cat(test_X, dim=0)
-        test_y = torch.cat(test_y, dim=0)
-
-        train_data = {'X': train_X, 'y': train_y}
-        test_data = {'X': test_X, 'y': test_y}
+        data = {'train':train_loader, 'test':test_loader}
 
         print('done loading')
 
-        return [train_data, test_data]
-
+        return data

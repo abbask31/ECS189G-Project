@@ -151,7 +151,7 @@ class Method_CNN_MNIST(method, nn.Module):
         pred_y_tensor = torch.tensor(pred_y, device=self.device) if isinstance(pred_y, np.ndarray) else pred_y
         return {'pred_y': pred_y_tensor.cpu().numpy(), 'true_y': self.data['test']['y']}
 
-# model = Method_CNN_MNIST('orl','')
+model = Method_CNN_MNIST('orl','')
 #
 # # Create a random input tensor to visualize the model
 # x = torch.randn(1, 1, 28, 28, device=model.device)
