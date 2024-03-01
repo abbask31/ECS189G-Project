@@ -139,6 +139,8 @@ class Dataset_Loader(dataset):
                     pickle.dump(train_loader, f)
                 with open(self.test_classifier_path, 'wb') as f:
                     pickle.dump(test_loader, f)
+        elif self.task == 'generator':
+            pass
         for batch_idx, (inputs, labels) in enumerate(test_loader):
             print(f"Batch {batch_idx}: Inputs shape: {inputs.shape}, Labels shape: {labels.shape}")
 

@@ -111,25 +111,51 @@ class IMDbDataset(Dataset):
 
 
 class RNNGenerator(nn.Module):
-    def __init__(self, embedding, hidden_size, num_layers, output_size):
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.embedding = nn.Embedding.from_pretrained(embedding.vectors)
+    data = None
+    def __init__(self, mName='Classifer RNN', hidden_size=512, num_layers=2, output_size=1):
+        super(RNNGenerator, self).__init__()
 
-        self.lstm = nn.LSTM(100, hidden_size, num_layers, batch_first=True, dropout=0.2, bidirectional=False)
+        # Setup
+        self.method_name = mName
+        self.glove = GloVe(name='6B', dim=100, cache=r'data\stage_4_data\embedding')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+        # Layers
+        self.lstm = nn.LSTM(100, hidden_size, num_layers, batch_first=True, dropout=0.3, bidirectional=False)
+        self.embedding = nn.Embedding.from_pretrained(self.glove.vectors)
         self.rnn = nn.RNN(100, 1)
         self.fc1 = nn.Linear(hidden_size, output_size)
         self.dropout = nn.Dropout(p=0.3)
         self.sig = nn.Sigmoid()
 
+        # Hyperparams
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.num_epochs = 12
+        self.lr = 0.001
+        self.criterion = nn.BCELoss()
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+
+        self.to(self.device)
+
+
     def forward(self, x):
+
         x = x.long()
+
         x = self.embedding(x)
+
         out, _ = self.lstm(x)
+
         out = out[:, -1, :]
+
         out = self.dropout(out)
+
         out = self.fc1(out)
+
         out = self.sig(out)
+
         return out
 def generate_text(model, vocab, initial_seq="The", num_words=3):
     model.eval()  # Put the model in evaluation mode
@@ -159,7 +185,7 @@ def generate_text(model, vocab, initial_seq="The", num_words=3):
 
     return generated_text
 
-train_loader_path = r'data\stage_4_data\loaded_data\generator_train_loader.pkl'
+train_loader_path = r'data\stage_4_data\loaded_data\train_loader.pkl'
 train_data = []
 train_loader = []
 
@@ -182,7 +208,7 @@ else:
 embedding = glove
 
 # Define hyperparameters
-NUM_EPOCHS = 20
+NUM_EPOCHS = 5
 LEARNING_RATE = 0.001
 
 model = RNNGenerator(embedding, 512, 2, 1).to(device)
@@ -190,19 +216,19 @@ criterion = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 # Train the model
-for epoch in range(NUM_EPOCHS):
-    model.train()
-    cur_epoch = 1
-    for epoch in range(NUM_EPOCHS):
 
-        for inputs, targets in train_loader:
-            optimizer.zero_grad()
-            inputs, targets = inputs.long(), targets.long()
-            output, _ = model(inputs)
-            loss = criterion(output, targets)
-            loss.backward()
-            optimizer.step()
-        print('epoch ' + str(cur_epoch) + ' complete')
+for epoch in range(NUM_EPOCHS):
+
+    for inputs, targets in train_loader:
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+        optimizer.zero_grad()
+
+        output = model(inputs).squeeze(1)
+        loss = criterion(output, targets)
+        loss.backward()
+        optimizer.step()
+    print('epoch ' + str(epoch) + ' complete')
 
 # Save the model
 torch.save(model.state_dict(), 'joke_generator_rnn_model.pth')

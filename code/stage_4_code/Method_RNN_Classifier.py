@@ -1,35 +1,34 @@
 from torchtext.vocab import GloVe
-
-from code.base_class.method import method
-from code.stage_4_code.Evaluate_Accuracy import Evaluate_Accuracy
-import torch.nn.functional as F
 import torch
 from torch import nn
-import numpy as np
 import matplotlib.pyplot as plt
 
 class Method_RNN_Classifier(nn.Module):
     data = None
     def __init__(self, mName='Classifer RNN', hidden_size=512, num_layers=2, output_size=1):
         super(Method_RNN_Classifier, self).__init__()
-        self.method_name = mName
-        glove = GloVe(name='6B', dim=100, cache=r'data\stage_4_data\embedding')
-        self.glove = glove
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.embedding = nn.Embedding.from_pretrained(glove.vectors)
-        self.num_epochs = 20
-        self.lr = 0.001
 
-        self.lstm = nn.LSTM(100, hidden_size, num_layers, batch_first=True, dropout=0.2, bidirectional=False)
+        # Setup
+        self.method_name = mName
+        self.glove = GloVe(name='6B', dim=100, cache=r'data\stage_4_data\embedding')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+        # Layers
+        self.lstm = nn.LSTM(100, hidden_size, num_layers, batch_first=True, dropout=0.3, bidirectional=False)
+        self.embedding = nn.Embedding.from_pretrained(self.glove.vectors)
         self.rnn = nn.RNN(100, 1)
         self.fc1 = nn.Linear(hidden_size, output_size)
         self.dropout = nn.Dropout(p=0.3)
         self.sig = nn.Sigmoid()
+
+        # Hyperparams
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.num_epochs = 12
+        self.lr = 0.001
         self.criterion = nn.BCELoss()
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-
 
         self.to(self.device)
 
