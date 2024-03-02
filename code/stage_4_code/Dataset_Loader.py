@@ -117,6 +117,7 @@ class Dataset_Loader(dataset):
 
         train_loader = None
         test_loader = None
+        data = None
 
 
         if self.task == 'classification':
@@ -139,12 +140,22 @@ class Dataset_Loader(dataset):
                     pickle.dump(train_loader, f)
                 with open(self.test_classifier_path, 'wb') as f:
                     pickle.dump(test_loader, f)
-        elif self.task == 'generator':
-            pass
-        for batch_idx, (inputs, labels) in enumerate(test_loader):
-            print(f"Batch {batch_idx}: Inputs shape: {inputs.shape}, Labels shape: {labels.shape}")
 
-        data = {'train': train_loader, 'test': test_loader}
+            data = {'train': train_loader, 'test': test_loader}
+
+        elif self.task == 'generator':
+            sentences =[]
+            with open(self.dataset_source_folder_path + self.dataset_source_file_name, 'r') as file:
+                next(file)  # Skip the first row (header)
+                for line in file:
+                    values = line.strip().split(',')  # Split each line into a list of values
+                    if len(values) > 1:  # Ensure there is at least a second value
+                        text = values[1]
+                        text = text[1:-1] + " <eos>"
+                        sentences.append(text)  # Add the second value of each row to the list
+
+            data = {'train':sentences}
+
 
         print('done loading')
 

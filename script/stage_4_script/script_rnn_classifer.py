@@ -37,14 +37,14 @@ def run_model(settings_obj):
     accuracy, additional_metrics = settings_obj.load_run_save_evaluate()
     precision, recall, f1 = additional_metrics
     print('************ Overall Performance ************')
-    print('CNN Accuracy: ' + str(accuracy))
-    print('CNN Precision: ' + str(precision))
-    print('CNN Recall: ' + str(recall))
-    print('CNN F1-Score: ' + str(f1))
+    print('RNN Accuracy: ' + str(accuracy))
+    print('RNN Precision: ' + str(precision))
+    print('RNN Recall: ' + str(recall))
+    print('RNN F1-Score: ' + str(f1))
     print('************ Finish ************')
 
 
-# ---- Multi-Layer Perceptron script ----
+# ---- RNN script ----
 if 1:
     # ---- parameter section -------------------------------
     np.random.seed(2)
