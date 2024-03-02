@@ -53,11 +53,10 @@ class Method_RNN_Classifier(nn.Module):
 
 
     def train(self, train_loader):
-        # Initialize model, loss, and optimizer
+        train_loss_history = []
+        train_acc_history = []
 
-        # Train the model
         for epoch in range(self.num_epochs):
-            # model.train()
 
             total_loss = 0.0
             total_correct = 0
@@ -70,12 +69,9 @@ class Method_RNN_Classifier(nn.Module):
                 outputs = self(inputs).squeeze(1)
                 loss = self.criterion(outputs, labels)
 
-                # Compute loss
+                # Compute gradients and update parameters
                 self.optimizer.zero_grad()
                 loss.backward()
-
-                nn.utils.clip_grad_norm_(self.parameters(), 5)
-
                 self.optimizer.step()
 
                 # Compute accuracy
@@ -86,12 +82,32 @@ class Method_RNN_Classifier(nn.Module):
 
                 total_loss += loss.item()
 
-
-            print(f"correct: {total_correct} total sample: {total_samples}")
             epoch_loss = total_loss / len(train_loader)
             epoch_accuracy = total_correct / total_samples
 
-            print(f'Epoch [{epoch + 1}/{self.num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_accuracy:.4f}')
+            train_loss_history.append(epoch_loss)
+            train_acc_history.append(epoch_accuracy)
+
+            print(f'Epoch [{epoch + 1}/{self.num_epochs}], Train Loss: {epoch_loss:.4f}, Train Acc: {epoch_accuracy:.4f}')
+
+        # Plotting
+        plt.figure(figsize=(10, 5))
+
+        plt.subplot(1, 2, 1)
+        plt.plot(train_loss_history, label='Train Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Training Loss')
+        plt.legend()
+
+        plt.subplot(1, 2, 2)
+        plt.plot(train_acc_history, label='Train Accuracy')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.title('Training Accuracy')
+        plt.legend()
+
+        plt.show()
 
 
     def test(self, test_loader):
