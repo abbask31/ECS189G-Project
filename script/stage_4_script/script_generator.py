@@ -11,8 +11,8 @@ data = data_obj.load()
 
 method_obj = Method_RNN_Generator()
 method_obj.data = data['train']
-method_obj.vocab_path = r'data\stage_4_data\text_generation\loaded_data\vocab.json'
-method_obj.idx_word_path = r'data\stage_4_data\text_generation\loaded_data\idx_to_word.json'
+method_obj.vocab_path = r'data\stage_4_data\loaded_data\vocab.json'
+method_obj.idx_word_path = r'data\stage_4_data\loaded_data\idx_to_word.json'
 
 print('-----Start Training-----')
 method_obj.train_model()
