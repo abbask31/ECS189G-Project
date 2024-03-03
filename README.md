@@ -8,6 +8,7 @@
 Please run this code using the following instructions:
 1. Clone this Git Repo locally
 2. Have appropiate data in data/stage_4_data (too big to store on git)
+3. In data/stage_4_data/embedding, please download and store the glove_6b.zip file from https://nlp.stanford.edu/data/glove.6B.zip.
 ## Classification RNN
 1. Navigate to **script/stage_4_script/script_rnn_classifier.py**
 2. Run the script
