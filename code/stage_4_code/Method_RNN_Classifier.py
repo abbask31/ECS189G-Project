@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 class Method_RNN_Classifier(nn.Module):
     data = None
-    def __init__(self, mName='Classifer RNN', hidden_size=512, num_layers=2, output_size=1):
+    def __init__(self, mName='Classifer RNN', hidden_size=1028, num_layers=2, output_size=1):
         super(Method_RNN_Classifier, self).__init__()
 
         # Setup

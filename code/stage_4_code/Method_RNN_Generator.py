@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from collections import Counter
+
+from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader, TensorDataset
 
 
@@ -58,8 +60,7 @@ class Method_RNN_Generator:
                 y.append(sequence[i + sequence_length])
         return torch.tensor(X, dtype=torch.long), torch.tensor(y, dtype=torch.long)
 
-    def train_model(self, epochs=100):
-
+    def train_model(self, epochs=200):
         self.vocab = self._build_vocab(self.data)
         sequences = self._sentences_to_sequences(self.data)
         vocab_size = len(self.vocab)
@@ -69,10 +70,15 @@ class Method_RNN_Generator:
 
         self.model = RNNModel(vocab_size, self.embedding_dim, self.hidden_dim, vocab_size).to(self.device)
         loss_function = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(self.model.parameters())
+        optimizer = optim.Adam(self.model.parameters(), lr=0.0001)
+
+        epoch_losses = []  # to store loss values for each epoch
 
         for epoch in range(epochs):
             total_loss = 0
+            total_correct = 0
+            total_samples = 0
+
             for batch_idx, (data, targets) in enumerate(dataloader):
                 data = data.to(self.device)
                 targets = targets.to(self.device)
@@ -82,7 +88,28 @@ class Method_RNN_Generator:
                 loss.backward()
                 optimizer.step()
                 total_loss += loss.item()
-            print(f'Epoch {epoch + 1}, Loss: {total_loss / len(dataloader)}')
+
+                # Compute accuracy
+                predicted = output.argmax(dim=1)
+                correct = (predicted == targets).sum().item()
+                total_correct += correct
+                total_samples += targets.size(0)
+
+            epoch_loss = total_loss / len(dataloader)
+            epoch_losses.append(epoch_loss)
+
+            # Compute accuracy for the epoch
+            epoch_accuracy = total_correct / total_samples
+
+            print(f'Epoch {epoch + 1}, Loss: {epoch_loss:.4f}, Accuracy: {epoch_accuracy:.4f}')
+
+        # Plot the loss
+        plt.plot(epoch_losses, label='Training Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Training Loss Over Epochs')
+        plt.legend()
+        plt.show()
 
         # Save vocab and idx_to_word
         with open(self.vocab_path, 'w') as vocab_f:
@@ -92,7 +119,7 @@ class Method_RNN_Generator:
         with open(self.idx_word_path, 'w') as idx_to_word_f:
             json.dump(self.idx_to_word, idx_to_word_f)
 
-    def generate_text(self, initial_words, max_length=20):
+    def generate_text(self, initial_words, max_length=100):
         if not self.vocab:
             with open('vocab.json', 'r') as vocab_f:
                 self.vocab = json.load(vocab_f)
@@ -113,21 +140,3 @@ class Method_RNN_Generator:
             generated_words.append(self.idx_to_word[predicted_word_idx])
 
         return ' '.join(generated_words)
-
-
-# Example usage
-# generator = Method_RNN_Generator()
-# generator.train_model()
-# initial_words = ['what', 'did', 'the']
-# generated_text = generator.generate_text(initial_words)
-# generated_text2 = generator.generate_text(['i', 'like', 'chicken'])
-# print(generated_text)
-# print(generated_text2)
-
-
-
-# torch.save(model.state_dict(), r'result\stage_4_result\text_generation\joke_model.pth')
-# # Example usage
-# initial_words = ['what', 'did', 'the']
-# generated_text = generate_text(initial_words, model, vocab, idx_to_word)
-# print(generated_text)

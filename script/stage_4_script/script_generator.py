@@ -19,7 +19,10 @@ method_obj.train_model()
 
 print('-----Start Testing-----')
 # Modify this to add any starting words to test model
-starting_words = [['why', 'did', 'the'], ['what', 'does', 'chicken'], ['i', 'like', 'school']]
+starting_words = [['what', 'do', 'you'], ['what', 'did', 'the'], ['what', 'does', 'a']]
 
-for words in starting_words:
-    print(method_obj.generate_text(words))
+x = ''
+while (x != 'X'):
+    starting_words = input("Enter starting words separated by spaces: ").strip().split()
+    print(method_obj.generate_text(starting_words))
+    x = input("To continue, press enter\nTo exit, press X.\n")
