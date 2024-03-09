@@ -149,44 +149,44 @@ class Dataset_Loader(dataset):
         # idx_val = torch.LongTensor(idx_val)
         # idx_test = torch.LongTensor(idx_test)
         # get the training nodes/testing nodes
-        train_x = features[idx_train]
-        val_x = features[idx_val]
-        test_x = features[idx_test]
-        print(train_x, val_x, test_x)
+        # train_x = features[idx_train]
+        # val_x = features[idx_val]
+        # test_x = features[idx_test]
+        # print(train_x, val_x, test_x)
 
         train_test_val = {'idx_train': idx_train, 'idx_test': idx_test, 'idx_val': idx_val}
         graph = {'node': idx_map, 'edge': edges, 'X': features, 'y': labels, 'utility': {'A': adj, 'reverse_idx': reverse_idx_map}}
         return {'graph': graph, 'train_test_val': train_test_val}
 
-cora_data = Dataset_Loader()
-cora_data.dataset_name = 'pubmed'
-cora_data.dataset_source_folder_path = r'data\stage_5_data\pubmed'
-cora_data = cora_data.load()
-
-print("Number of nodes in Cora dataset:", len(cora_data['graph']['node']))
-print("Number of links in Cora dataset:", len(cora_data['graph']['edge']))
-
-# Inspect Training and Testing Sets
-print("Number of nodes in Cora training set:", len(cora_data['train_test_val']['idx_train']))
-print("Number of nodes in Cora testing set:", len(cora_data['train_test_val']['idx_test']))
-
-# Check if the number of nodes per class is correct in the training set
-class_counts_train = {i: (cora_data['graph']['y'][cora_data['train_test_val']['idx_train']] == i).sum().item() for i in range(3)}
-
-print("Number of nodes per class in Cora training set:", class_counts_train)
-
-# Check if the number of nodes per class is correct in the testing set
-class_counts_test = {i: (cora_data['graph']['y'][cora_data['train_test_val']['idx_test']] == i).sum().item() for i in range(3)}
-print("Number of nodes per class in Cora testing set:", class_counts_test)
-
-# Check Node Features and Labels
-# You can print the features and labels of a few nodes to ensure they are correctly assigned
-sample_node_indices = [0, 1, 2]  # You can choose any random indices
-for node_index in sample_node_indices:
-    print("Node Index:", node_index)
-    print("Features:", cora_data['graph']['X'][node_index])
-    print("Label:", cora_data['graph']['y'][node_index])
-
-# Ensure that the nodes are randomly sampled by checking the first few indices
-print("First 10 indices in Cora training set:", cora_data['train_test_val']['idx_train'][:10])
-print("First 10 indices in Cora testing set:", cora_data['train_test_val']['idx_test'][:10])
+# cora_data = Dataset_Loader()
+# cora_data.dataset_name = 'cora'
+# cora_data.dataset_source_folder_path = r'data\stage_5_data\cora'
+# cora_data = cora_data.load()
+#
+# print("Number of nodes in Cora dataset:", len(cora_data['graph']['node']))
+# print("Number of links in Cora dataset:", len(cora_data['graph']['edge']))
+#
+# # Inspect Training and Testing Sets
+# print("Number of nodes in Cora training set:", len(cora_data['train_test_val']['idx_train']))
+# print("Number of nodes in Cora testing set:", len(cora_data['train_test_val']['idx_test']))
+#
+# # Check if the number of nodes per class is correct in the training set
+# class_counts_train = {i: (cora_data['graph']['y'][cora_data['train_test_val']['idx_train']] == i).sum().item() for i in range(3)}
+#
+# print("Number of nodes per class in Cora training set:", class_counts_train)
+#
+# # Check if the number of nodes per class is correct in the testing set
+# class_counts_test = {i: (cora_data['graph']['y'][cora_data['train_test_val']['idx_test']] == i).sum().item() for i in range(3)}
+# print("Number of nodes per class in Cora testing set:", class_counts_test)
+#
+# # Check Node Features and Labels
+# # You can print the features and labels of a few nodes to ensure they are correctly assigned
+# sample_node_indices = [0, 1, 2]  # You can choose any random indices
+# for node_index in sample_node_indices:
+#     print("Node Index:", node_index)
+#     print("Features:", cora_data['graph']['X'][node_index])
+#     print("Label:", cora_data['graph']['y'][node_index])
+#
+# # Ensure that the nodes are randomly sampled by checking the first few indices
+# print("First 10 indices in Cora training set:", cora_data['train_test_val']['idx_train'][:10])
+# print("First 10 indices in Cora testing set:", cora_data['train_test_val']['idx_test'][:10])
