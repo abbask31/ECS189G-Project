@@ -7,9 +7,9 @@ import torch.nn.functional as F
 from code.stage_5_code.Dataset_Loader import Dataset_Loader
 from torch_geometric.nn import GCNConv
 import torch.optim as optim
-
+from code.stage_5_code.Method_GNN_Cora import Method_GNN_Cora
 class GCN(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout):
+    def __init__(self, nfeat=1433, nhid=40, nclass=7, dropout=0.5):
         super(GCN, self).__init__()
 
         self.gc1 = GCNConv(nfeat, nhid)
@@ -46,23 +46,20 @@ adj = graph['utility']['A'].to(device)
 idx_train = train_test['idx_train']
 idx_test = train_test['idx_test']
 
-model = GCN(nfeat=features.shape[1],
-            nhid=16,
-            nclass=labels.max().item() + 1,
-            dropout=0.5).to(device)
+
+model = GCN().to(device)
 optimizer = optim.Adam(model.parameters(),
-                       lr=0.01, weight_decay=5e-4)
+                       lr=0.001, weight_decay=5e-2)
 
-np.random.seed(42)
-torch.cuda.manual_seed(42)
+criterion = nn.NLLLoss()
 
 
-for epoch in range(200):
+for epoch in range(300):
     t = time.time()
     model.train()
     optimizer.zero_grad()
     output = model(features, adj)
-    loss_train = F.nll_loss(output[idx_train], labels[idx_train])
+    loss_train = criterion(output[idx_train], labels[idx_train])
     acc_train = accuracy(output[idx_train], labels[idx_train])
     loss_train.backward()
     optimizer.step()
