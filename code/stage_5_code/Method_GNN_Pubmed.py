@@ -13,12 +13,12 @@ def accuracy(output, labels):
     return correct / len(labels)
 
 
-class Method_GNN_Cora(nn.Module):
+class Method_GNN_Pubmed(nn.Module):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     data = None
 
-    def __init__(self, nfeat=1433, nclass=7, nhid=42, dropout=0.5):
-        super(Method_GNN_Cora, self).__init__()
+    def __init__(self, nfeat=3703, nclass=6, nhid=40, dropout=0.5):
+        super(Method_GNN_Pubmed, self).__init__()
 
         self.gc1 = GCNConv(nfeat, nhid)
         self.gc2 = GCNConv(nhid, nclass)
