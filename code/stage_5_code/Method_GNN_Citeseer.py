@@ -2,9 +2,9 @@ import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from sklearn.metrics import precision_score, recall_score, f1_score
 from torch_geometric.nn import GCNConv
 import torch.optim as optim
-
 
 def accuracy(output, labels):
     preds = output.max(1)[1].type_as(labels)
@@ -12,19 +12,29 @@ def accuracy(output, labels):
     correct = correct.sum()
     return correct / len(labels)
 
+def precision(output, labels):
+    preds = output.max(1)[1].type_as(labels)
+    return precision_score(labels.cpu(), preds.cpu(), average='macro')
+def recall(output, labels):
+    preds = output.max(1)[1].type_as(labels)
+    return recall_score(labels.cpu(), preds.cpu(), average='macro')
+
+def f1(output, labels):
+    preds = output.max(1)[1].type_as(labels)
+    return f1_score(labels.cpu(), preds.cpu(), average='macro')
 
 class Method_GNN_Citeseer(nn.Module):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     data = None
 
-    def __init__(self, nfeat=3703, nclass=6, nhid=16, dropout=0.5):
+    def __init__(self, nfeat=3703, nclass=6, nhid=64, dropout=0.40):
         super(Method_GNN_Citeseer, self).__init__()
 
         self.gc1 = GCNConv(nfeat, nhid)
         self.gc2 = GCNConv(nhid, nclass)
         self.dropout = dropout
 
-        self.num_epochs = 300
+        self.num_epochs = 250
         self.optimizer = optim.Adam(self.parameters(),
                                     lr=0.001, weight_decay=5e-2)
         self.criterion = nn.NLLLoss()
@@ -58,16 +68,25 @@ class Method_GNN_Citeseer(nn.Module):
                   'time: {:.4f}s'.format(time.time() - t))
 
     def test_model(self, graph, idx_test):
+
         features = graph['X'].to(self.device)
         labels = graph['y'].to(self.device)
         adj = graph['utility']['A'].to(self.device)
+
         self.eval()
         output = self(features, adj)
         loss_test = self.criterion(output[idx_test], labels[idx_test])
         acc_test = accuracy(output[idx_test], labels[idx_test])
-        print("Test set results:",
-              "loss= {:.4f}".format(loss_test.item()),
-              "accuracy= {:.4f}".format(acc_test.item()))
+        prec_test = precision(output[idx_test], labels[idx_test])
+        recall_test = recall(output[idx_test], labels[idx_test])
+        f1_test = f1(output[idx_test], labels[idx_test])
+
+        print("Test set results:\n",
+              "Loss= {:.4f}\n".format(loss_test.item()),
+              "Accuracy= {:.4f}\n".format(acc_test.item()),
+              "Precision: {:.4f}\n".format(prec_test.item()),
+              "Recall: {:.4f}\n".format(recall_test.item()),
+              "F1-Score: {:.4f}\n".format(f1_test.item()))
 
     def run(self):
         graph = self.data['graph']

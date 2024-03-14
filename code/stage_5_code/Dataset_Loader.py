@@ -79,7 +79,7 @@ class Dataset_Loader(dataset):
             for idx, label in enumerate(labels):
                 class_indices_train[label.item()].append(idx)
                 class_indices_test[label.item()].append(idx)
-
+            # print(class_indices_train)
             # Sample nodes for the training and testing sets
             idx_train = []
             idx_test = []
@@ -88,7 +88,15 @@ class Dataset_Loader(dataset):
                 idx_train += np.random.choice(class_idx, nodes_per_class_train, replace=False).tolist()
 
             for class_idx in class_indices_test:
-                idx_test += np.random.choice(class_idx, nodes_per_class_test, replace=False).tolist()
+                remaining_indices = [idx for idx in class_idx if idx not in idx_train]
+                sampled_indices = np.random.choice(remaining_indices, nodes_per_class_test, replace=False).tolist()
+                idx_test += sampled_indices
+
+            # for class_idx in class_indices_train:
+            #     idx_train += np.random.choice(class_idx, nodes_per_class_train, replace=False).tolist()
+            #
+            # for class_idx in class_indices_test:
+            #     idx_test += np.random.choice(class_idx, nodes_per_class_test, replace=False).tolist()
 
             idx_val = torch.LongTensor(np.random.choice(range(1200, 1500), size=20, replace=False).tolist() * 7)
         elif self.dataset_name == 'citeseer':
