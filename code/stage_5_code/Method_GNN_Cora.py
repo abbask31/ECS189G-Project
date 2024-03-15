@@ -30,17 +30,18 @@ class Method_GNN_Cora(nn.Module):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     data = None
 
-    def __init__(self, nfeat=1433, nclass=7, nhid=42, dropout=0.47):
+    def __init__(self, nfeat=1433, nclass=7, nhid=100, dropout=0.5):
         super(Method_GNN_Cora, self).__init__()
 
         self.gc1 = GCNConv(nfeat, nhid)
-        self.gc2 = GCNConv(nhid, nclass)
+        self.gc2 = GCNConv(nhid, nhid)
+        self.gc3 = GCNConv(nhid, nclass)
 
         self.dropout = dropout
 
-        self.num_epochs = 147
-        self.optimizer = optim.Adam(self.parameters(), lr=0.002, weight_decay=3.3e-2)
-        self.criterion = nn.NLLLoss()
+        self.num_epochs = 140
+        self.optimizer = optim.Adam(self.parameters(), lr=0.001, weight_decay=3.9e-2)
+        self.criterion = nn.CrossEntropyLoss()
 
         self.to(self.device)
         self.testing_accuracy = 0.0
@@ -48,8 +49,9 @@ class Method_GNN_Cora(nn.Module):
     def forward(self, x, adj):
         x = F.relu(self.gc1(x, adj))
         x = F.dropout(x, self.dropout, training=self.training)
-        x = self.gc2(x, adj)
-
+        x = F.relu(self.gc2(x, adj))
+        x = F.dropout(x, self.dropout, training=self.training)
+        x = self.gc3(x, adj)
         return F.log_softmax(x, dim=1)
 
     def train_model(self, graph, idx_train):
