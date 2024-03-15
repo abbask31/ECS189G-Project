@@ -2,6 +2,7 @@ import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from matplotlib import pyplot as plt
 from sklearn.metrics import precision_score, recall_score, f1_score
 from torch_geometric.nn import GCNConv
 import torch.optim as optim
@@ -29,30 +30,38 @@ class Method_GNN_Pubmed(nn.Module):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     data = None
 
-    def __init__(self, nfeat=500, nclass=3, nhid=40, dropout=0.55):
+    def __init__(self, nfeat=500, nclass=3, nhid=252, dropout=0.5):
         super(Method_GNN_Pubmed, self).__init__()
 
         self.gc1 = GCNConv(nfeat, nhid)
-        self.gc2 = GCNConv(nhid, nclass)
+        self.gc2 = GCNConv(nhid, nhid)
+        self.gc3 = GCNConv(nhid, nclass)
         self.dropout = dropout
 
-        self.num_epochs = 300
+        self.num_epochs = 195
         self.optimizer = optim.Adam(self.parameters(),
-                                    lr=0.001, weight_decay=5e-6)
-        self.criterion = nn.NLLLoss()
+                                    lr=0.001, weight_decay=5.5e-4)
+        self.criterion = nn.CrossEntropyLoss()
 
         self.to(self.device)
+
+        self.testing_accuracy = 0.0
 
     def forward(self, x, adj):
         x = F.relu(self.gc1(x, adj))
         x = F.dropout(x, self.dropout, training=self.training)
-        x = self.gc2(x, adj)
+        x = F.relu(self.gc2(x, adj))
+        x = F.dropout(x, self.dropout, training=self.training)
+        x = self.gc3(x, adj)
         return F.log_softmax(x, dim=1)
 
     def train_model(self, graph, idx_train):
         features = graph['X'].to(self.device)
         labels = graph['y'].to(self.device)
         adj = graph['utility']['A'].to(self.device)
+
+        train_losses = []
+        train_accuracies = []
 
         for epoch in range(self.num_epochs):
             t = time.time()
@@ -64,11 +73,33 @@ class Method_GNN_Pubmed(nn.Module):
             loss_train.backward()
             self.optimizer.step()
 
+            # Store the training loss and accuracy for plotting
+            train_losses.append(loss_train.item())
+            train_accuracies.append(acc_train.item())
+
             print('Epoch: {:04d}'.format(epoch + 1),
                   'loss_train: {:.4f}'.format(loss_train.item()),
                   'acc_train: {:.4f}'.format(acc_train.item()),
-                  'time: {:.4f}s'.format(time.time() - t)
-                  )
+                  'time: {:.4f}s'.format(time.time() - t))
+
+        # Plot the training loss and accuracy curves
+        plt.figure(figsize=(10, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(range(1, self.num_epochs + 1), train_losses, label='Training Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Training Loss Curve')
+        plt.legend()
+
+        plt.subplot(1, 2, 2)
+        plt.plot(range(1, self.num_epochs + 1), train_accuracies, label='Training Accuracy')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.title('Training Accuracy Curve')
+        plt.legend()
+
+        plt.tight_layout()
+        # plt.show()
 
     def test_model(self, graph, idx_test):
         features = graph['X'].to(self.device)
@@ -81,7 +112,7 @@ class Method_GNN_Pubmed(nn.Module):
         prec_test = precision(output[idx_test], labels[idx_test])
         recall_test = recall(output[idx_test], labels[idx_test])
         f1_test = f1(output[idx_test], labels[idx_test])
-
+        self.testing_accuracy = acc_test.item()
         print("Test set results:\n",
               "Loss= {:.4f}\n".format(loss_test.item()),
               "Accuracy= {:.4f}\n".format(acc_test.item()),

@@ -36,7 +36,7 @@ class Dataset_Loader(dataset):
 
     def encode_onehot(self, labels):
         classes = set(labels)
-        classes_dict = {c: np.identity(len(classes))[i, :] for i, c in enumerate(classes)}
+        classes_dict = {c: np.identity(len(classes))[i, :] for i, c in enumerate(sorted(classes))}
         onehot_labels = np.array(list(map(classes_dict.get, labels)), dtype=np.int32)
         return onehot_labels
 
@@ -121,7 +121,15 @@ class Dataset_Loader(dataset):
                 idx_train += np.random.choice(class_idx, nodes_per_class_train, replace=False).tolist()
 
             for class_idx in class_indices_test:
-                idx_test += np.random.choice(class_idx, nodes_per_class_test, replace=False).tolist()
+                remaining_indices = [idx for idx in class_idx if idx not in idx_train]
+                sampled_indices = np.random.choice(remaining_indices, nodes_per_class_test, replace=False).tolist()
+                idx_test += sampled_indices
+
+            # for class_idx in class_indices_train:
+            #     idx_train += np.random.choice(class_idx, nodes_per_class_train, replace=False).tolist()
+            #
+            # for class_idx in class_indices_test:
+            #     idx_test += np.random.choice(class_idx, nodes_per_class_test, replace=False).tolist()
             idx_val = range(1200, 1500)
         elif self.dataset_name == 'pubmed':
             num_classes = 3
@@ -145,7 +153,15 @@ class Dataset_Loader(dataset):
                 idx_train += np.random.choice(class_idx, nodes_per_class_train, replace=False).tolist()
 
             for class_idx in class_indices_test:
-                idx_test += np.random.choice(class_idx, nodes_per_class_test, replace=False).tolist()
+                remaining_indices = [idx for idx in class_idx if idx not in idx_train]
+                sampled_indices = np.random.choice(remaining_indices, nodes_per_class_test, replace=False).tolist()
+                idx_test += sampled_indices
+
+            # for class_idx in class_indices_train:
+            #     idx_train += np.random.choice(class_idx, nodes_per_class_train, replace=False).tolist()
+            #
+            # for class_idx in class_indices_test:
+            #     idx_test += np.random.choice(class_idx, nodes_per_class_test, replace=False).tolist()
             idx_val = range(6000, 6300)
         #---- cora-small is a toy dataset I hand crafted for debugging purposes ---
         elif self.dataset_name == 'cora-small':
