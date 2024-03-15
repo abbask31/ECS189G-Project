@@ -38,7 +38,7 @@ class Method_GNN_Citeseer(nn.Module):
 
         self.num_epochs = 139
         self.optimizer = optim.Adam(self.parameters(),
-                                    lr=1.2e-3, weight_decay=8e-2)
+                                    lr=1.1e-3, weight_decay=8.1e-2)
 
         self.criterion = nn.CrossEntropyLoss()
 
