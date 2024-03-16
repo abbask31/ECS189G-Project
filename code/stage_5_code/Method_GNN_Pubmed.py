@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import precision_score, recall_score, f1_score
 from torch_geometric.nn import GCNConv
 import torch.optim as optim
+from torchviz import make_dot
 
 
 def accuracy(output, labels):
@@ -48,6 +49,7 @@ class Method_GNN_Pubmed(nn.Module):
         self.testing_accuracy = 0.0
 
     def forward(self, x, adj):
+
         x = F.relu(self.gc1(x, adj))
         x = F.dropout(x, self.dropout, training=self.training)
         x = F.relu(self.gc2(x, adj))
@@ -107,6 +109,8 @@ class Method_GNN_Pubmed(nn.Module):
         adj = graph['utility']['A'].to(self.device)
         self.eval()
         output = self(features, adj)
+        dot = make_dot(output, params=dict(self.named_parameters()))
+        dot.render("model_architecture_pubmed", format="png")
         loss_test = self.criterion(output[idx_test], labels[idx_test])
         acc_test = accuracy(output[idx_test], labels[idx_test])
         prec_test = precision(output[idx_test], labels[idx_test])

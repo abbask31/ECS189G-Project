@@ -92,12 +92,6 @@ class Dataset_Loader(dataset):
                 sampled_indices = np.random.choice(remaining_indices, nodes_per_class_test, replace=False).tolist()
                 idx_test += sampled_indices
 
-            # for class_idx in class_indices_train:
-            #     idx_train += np.random.choice(class_idx, nodes_per_class_train, replace=False).tolist()
-            #
-            # for class_idx in class_indices_test:
-            #     idx_test += np.random.choice(class_idx, nodes_per_class_test, replace=False).tolist()
-
             idx_val = torch.LongTensor(np.random.choice(range(1200, 1500), size=20, replace=False).tolist() * 7)
         elif self.dataset_name == 'citeseer':
             num_classes = 6
@@ -125,11 +119,6 @@ class Dataset_Loader(dataset):
                 sampled_indices = np.random.choice(remaining_indices, nodes_per_class_test, replace=False).tolist()
                 idx_test += sampled_indices
 
-            # for class_idx in class_indices_train:
-            #     idx_train += np.random.choice(class_idx, nodes_per_class_train, replace=False).tolist()
-            #
-            # for class_idx in class_indices_test:
-            #     idx_test += np.random.choice(class_idx, nodes_per_class_test, replace=False).tolist()
             idx_val = range(1200, 1500)
         elif self.dataset_name == 'pubmed':
             num_classes = 3
@@ -157,11 +146,6 @@ class Dataset_Loader(dataset):
                 sampled_indices = np.random.choice(remaining_indices, nodes_per_class_test, replace=False).tolist()
                 idx_test += sampled_indices
 
-            # for class_idx in class_indices_train:
-            #     idx_train += np.random.choice(class_idx, nodes_per_class_train, replace=False).tolist()
-            #
-            # for class_idx in class_indices_test:
-            #     idx_test += np.random.choice(class_idx, nodes_per_class_test, replace=False).tolist()
             idx_val = range(6000, 6300)
         #---- cora-small is a toy dataset I hand crafted for debugging purposes ---
         elif self.dataset_name == 'cora-small':
@@ -169,48 +153,7 @@ class Dataset_Loader(dataset):
             idx_val = range(5, 10)
             idx_test = range(5, 10)
 
-        # idx_train = torch.LongTensor(idx_train)
-        # idx_val = torch.LongTensor(idx_val)
-        # idx_test = torch.LongTensor(idx_test)
-        # get the training nodes/testing nodes
-        # train_x = features[idx_train]
-        # val_x = features[idx_val]
-        # test_x = features[idx_test]
-        # print(train_x, val_x, test_x)
 
         train_test_val = {'idx_train': idx_train, 'idx_test': idx_test, 'idx_val': idx_val}
         graph = {'node': idx_map, 'edge': edges, 'X': features, 'y': labels, 'utility': {'A': adj, 'reverse_idx': reverse_idx_map}}
         return {'graph': graph, 'train_test_val': train_test_val}
-
-# cora_data = Dataset_Loader()
-# cora_data.dataset_name = 'cora'
-# cora_data.dataset_source_folder_path = r'data\stage_5_data\cora'
-# cora_data = cora_data.load()
-#
-# print("Number of nodes in Cora dataset:", len(cora_data['graph']['node']))
-# print("Number of links in Cora dataset:", len(cora_data['graph']['edge']))
-#
-# # Inspect Training and Testing Sets
-# print("Number of nodes in Cora training set:", len(cora_data['train_test_val']['idx_train']))
-# print("Number of nodes in Cora testing set:", len(cora_data['train_test_val']['idx_test']))
-#
-# # Check if the number of nodes per class is correct in the training set
-# class_counts_train = {i: (cora_data['graph']['y'][cora_data['train_test_val']['idx_train']] == i).sum().item() for i in range(3)}
-#
-# print("Number of nodes per class in Cora training set:", class_counts_train)
-#
-# # Check if the number of nodes per class is correct in the testing set
-# class_counts_test = {i: (cora_data['graph']['y'][cora_data['train_test_val']['idx_test']] == i).sum().item() for i in range(3)}
-# print("Number of nodes per class in Cora testing set:", class_counts_test)
-#
-# # Check Node Features and Labels
-# # You can print the features and labels of a few nodes to ensure they are correctly assigned
-# sample_node_indices = [0, 1, 2]  # You can choose any random indices
-# for node_index in sample_node_indices:
-#     print("Node Index:", node_index)
-#     print("Features:", cora_data['graph']['X'][node_index])
-#     print("Label:", cora_data['graph']['y'][node_index])
-#
-# # Ensure that the nodes are randomly sampled by checking the first few indices
-# print("First 10 indices in Cora training set:", cora_data['train_test_val']['idx_train'][:10])
-# print("First 10 indices in Cora testing set:", cora_data['train_test_val']['idx_test'][:10])

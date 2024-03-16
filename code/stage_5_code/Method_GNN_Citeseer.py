@@ -6,6 +6,8 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import precision_score, recall_score, f1_score
 from torch_geometric.nn import GCNConv
 import torch.optim as optim
+from torchviz import make_dot
+
 
 def accuracy(output, labels):
     preds = output.max(1)[1].type_as(labels)
@@ -109,6 +111,8 @@ class Method_GNN_Citeseer(nn.Module):
 
         self.eval()
         output = self(features, adj)
+        dot = make_dot(output, params=dict(self.named_parameters()))
+        dot.render("model_architecture_citeseer", format="png")
         loss_test = self.criterion(output[idx_test], labels[idx_test])
         acc_test = accuracy(output[idx_test], labels[idx_test])
         prec_test = precision(output[idx_test], labels[idx_test])

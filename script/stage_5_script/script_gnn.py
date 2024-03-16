@@ -30,7 +30,7 @@ def run_model(dataset_name):
     data = Dataset_Loader()
     data.dataset_name = dataset_name
     data.dataset_source_folder_path = rf'data\stage_5_data\{dataset_name}'
-    # data = data.load()
+
     model = None
     if dataset_name == 'cora':
         set_seed(38)
@@ -42,21 +42,19 @@ def run_model(dataset_name):
         set_seed(31)
         model = Method_GNN_Pubmed()
 
-
     result_saver = Result_Saver()
     result_saver.result_destination_folder_path = rf'result\stage_5_result\{dataset_name}'
     result_saver.result_destination_file_name = rf'\{dataset_name}.pth'
-
 
     setting_obj.prepare(data, model, result_saver, None)
     setting_obj.load_run_save_evaluate()
 
 
 # best seed 38
-# run_model('cora')
+run_model('cora')
 
-# # best seed 64
-# run_model('citeseer')
+# best seed 64
+run_model('citeseer')
 
-# # best seed 10
+# best seed 31
 run_model('pubmed')
