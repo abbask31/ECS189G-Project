@@ -7,14 +7,5 @@
 # Running Code
 Please run this code using the following instructions:
 1. Clone this Git Repo locally
-2. Have appropiate data in data/stage_4_data (too big to store on git)
-3. In data/stage_4_data/embedding, please download and store the glove_6b.zip file from https://nlp.stanford.edu/data/glove.6B.zip.
-## Classification RNN
-1. Navigate to **script/stage_4_script/script_rnn_classifier.py**
-2. Run the script
-3. This will trigger RNN to begin training and display results.
-## Generation RNN
-1. Navigate to **script/stage_4_script/script_generator.py**
-2. Run the script
-3. This will trigger RNN to begin training and display results.
-4. Change any of the input words to test the model.
+2. Have appropiate data in data/stage_5_data (too big to store on git)
+3. Run script/script_gnn.py and view results of training and testing
