@@ -98,7 +98,7 @@ class Method_GNN_Cora(nn.Module):
         plt.legend()
 
         plt.tight_layout()
-        # plt.show()
+        plt.show()
 
     def test_model(self, graph, idx_test):
         features = graph['X'].to(self.device)

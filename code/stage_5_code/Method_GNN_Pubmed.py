@@ -30,7 +30,7 @@ class Method_GNN_Pubmed(nn.Module):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     data = None
 
-    def __init__(self, nfeat=500, nclass=3, nhid=252, dropout=0.5):
+    def __init__(self, nfeat=500, nclass=3, nhid=252, dropout=0.50):
         super(Method_GNN_Pubmed, self).__init__()
 
         self.gc1 = GCNConv(nfeat, nhid)
@@ -99,7 +99,7 @@ class Method_GNN_Pubmed(nn.Module):
         plt.legend()
 
         plt.tight_layout()
-        # plt.show()
+        plt.show()
 
     def test_model(self, graph, idx_test):
         features = graph['X'].to(self.device)

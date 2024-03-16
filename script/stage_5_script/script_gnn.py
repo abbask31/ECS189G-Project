@@ -39,32 +39,8 @@ def run_model(dataset_name):
         set_seed(64)
         model = Method_GNN_Citeseer()
     elif dataset_name == 'pubmed':
-        set_seed(38)
+        set_seed(31)
         model = Method_GNN_Pubmed()
-
-    # max_acc = 0.0
-    # best_seed = 0
-    #
-    # for i in range(1, 100):
-    #     print(f'running seed {i}')
-    #     set_seed(i)
-    #     model = Method_GNN_Pubmed()
-    #     model.data = data
-    #     model.run()
-    #
-    #     # Train or evaluate your model here to obtain accuracy
-    #     # Assuming you have a function get_accuracy() that returns the accuracy of the model
-    #
-    #     # Example of getting accuracy (replace with your own code)
-    #     curr_acc = model.testing_accuracy
-    #
-    #     if curr_acc > max_acc:
-    #         max_acc = curr_acc
-    #         best_seed = i
-    #
-    # print("Best accuracy:", max_acc)
-    # print("Seed with best accuracy:", best_seed)
-
 
 
     result_saver = Result_Saver()
@@ -76,7 +52,7 @@ def run_model(dataset_name):
     setting_obj.load_run_save_evaluate()
 
 
-# best seed 15
+# best seed 38
 # run_model('cora')
 
 # # best seed 64
